@@ -18,4 +18,7 @@ public class WazirUser {
     private USER_ROLE role = USER_ROLE.ROLE_CUSTOMER;
     @Embedded// to indicate to JPA that the properties of the class TwoFactorAuthService should be considered part of this table
     private TwoFactorAuth twoFactorAuth = new TwoFactorAuth();
+
+    @OneToOne(mappedBy = "user")
+    private TwoFactorOtp twoFactorOtp;
 }

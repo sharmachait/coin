@@ -29,7 +29,7 @@ public class AppConfig {
         http
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth->{
-                    auth.requestMatchers("/api/**").hasRole("CUSTOMER")
+                    auth.requestMatchers("/api/**").authenticated()
                             .anyRequest().permitAll();
                 })
                 .addFilterBefore(new JwtTokenValidatorFilter(), BasicAuthenticationFilter.class)
