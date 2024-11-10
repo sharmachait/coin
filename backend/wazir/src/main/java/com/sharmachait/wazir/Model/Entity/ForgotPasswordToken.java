@@ -13,5 +13,6 @@ public class ForgotPasswordToken {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private WazirUser user;
     private String sendTo;
+    private boolean verified = false;
     private VERIFICATION_TYPE verificationType;
 }

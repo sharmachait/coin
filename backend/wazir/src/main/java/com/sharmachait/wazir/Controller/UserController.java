@@ -9,6 +9,7 @@ import com.sharmachait.wazir.Model.Entity.WazirUser;
 import com.sharmachait.wazir.Service.EmailService;
 import com.sharmachait.wazir.Service.UserService.IUserService;
 import com.sharmachait.wazir.Service.UserService.UserService;
+import com.sharmachait.wazir.Service.VerificationCodeService.IVerificationCodeService;
 import lombok.Data;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class UserController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private IVerificationCodeService verificationCodeService;
 
     @Autowired
     private EmailService emailService;
@@ -47,24 +51,21 @@ public class UserController {
                     .body("Bad request");
         }
     }
-
     @PostMapping("/request/twofactorauth/{verificationType}")
     public ResponseEntity<String> requestTwoFactorAuth(
             @RequestHeader(JwtConstants.JWT_HEADER) String jwtHeader,
             @PathVariable VERIFICATION_TYPE verificationType){
         try{
             WazirUser user =userService.findUserByJwt(jwtHeader);
-//            UserDto userDto = modelMapper.map(user, UserDto.class);
+
             VerificationCode verificationCode = verificationCodeService
                     .getVerificationCodeByUserId(user.getId());
             if(verificationCode!=null){
                 verificationCodeService.deleteVerificationCodeById(verificationCode.getId());
             }
-            VerificationCode code = verificationCodeService.sendVerificationCode(user, verificationType);
+
             try{
-                if(verificationType.equals(VERIFICATION_TYPE.EMAIL)){
-                    emailService.sendVerificationOtpEmail(user.getEmail(),code.getCode());
-                }
+                VerificationCode code = verificationCodeService.sendVerificationCode(user, verificationType);
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Otp email not sent please try again");
@@ -83,6 +84,7 @@ public class UserController {
             @PathVariable String otp){
         try{
             String email = JwtProvider.getEmailFromToken(jwtHeader);
+            WazirUser user = userService.findUserByJwt(jwtHeader);
             VerificationCode verificationCode = verificationCodeService.getVerificationCodeByUserId(user.getId());
             String sendTo;
             if(verificationCode.getVerificationType().equals(VERIFICATION_TYPE.EMAIL)){
@@ -99,7 +101,6 @@ public class UserController {
                         sendTo);
                 verificationCodeService.deleteVerificationCodeById(verificationCode.getId());
             }
-            WazirUser user = userService.findUserByJwt(jwtHeader);
             UserDto userDto = modelMapper.map(user, UserDto.class);
             return ResponseEntity.ok(userDto);
         } catch (Exception e) {
@@ -108,4 +109,6 @@ public class UserController {
                     .body("Bad request");
         }
     }
+
+
 }

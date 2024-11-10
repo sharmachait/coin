@@ -38,6 +38,7 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
                 List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(auths);
                 Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(auth);
+                // maybe not required
             } catch (JwtException | IllegalArgumentException e) {
                 // Handle invalid JWT token (return a 401 Unauthorized response)
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
