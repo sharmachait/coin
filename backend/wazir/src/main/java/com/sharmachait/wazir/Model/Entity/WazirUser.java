@@ -1,10 +1,16 @@
 package com.sharmachait.wazir.Model.Entity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 public class WazirUser {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Id
