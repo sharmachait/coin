@@ -18,8 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpHeaders;
 
 import java.math.BigDecimal;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CoinService implements ICoinService {
@@ -36,10 +35,60 @@ public class CoinService implements ICoinService {
 
     @Override
     public List<Coin> getCoinList(int page) throws JsonProcessingException {
-        String marketsUrl = baseUrl + "/coins/markets?vs_currency=usd&per_page=10&page=" + page;
-        String response = getResponseBody(marketsUrl);
+        String coinListUrl = baseUrl + "/coins/markets?vs_currency=usd&per_page=10&page=" + page;
+        String response = getResponseBody(coinListUrl);
         List<Coin> coins = objectMapper.readValue(response, new TypeReference<List<Coin>>(){});
         return coins;
+    }
+
+    @Override
+    public JsonNode getMarketChart(String coinId, int days) throws JsonProcessingException {
+        String marketsUrl = baseUrl + "/coins/"+coinId+"/market_chart?vs_currency=usd&days=" + days;
+        String response =  getResponseBody(marketsUrl);
+        JsonNode jsonNode = objectMapper.readTree(response);
+        return jsonNode;
+    }
+
+    @Override
+    public Coin getCoinDetails(String coinId) throws JsonProcessingException {
+        String coinUrl = baseUrl + "/coins/"+coinId;
+        String response =  getResponseBody(coinUrl);
+        Coin coin = jsonNodeToCoin(response);
+        return coinRepository.save(coin);
+    }
+
+    @Override
+    public Coin findById(String coinId) throws NoSuchElementException {
+        Optional<Coin> coin = coinRepository.findById(coinId);
+        return coin.get();
+    }
+
+    @Override
+    public JsonNode searchCoin(String keyword) throws JsonProcessingException {
+        String coinSearchUrl = baseUrl + "/search?query=" + keyword;
+        String response = getResponseBody(coinSearchUrl);
+        JsonNode jsonNode = objectMapper.readTree(response);
+        return jsonNode;
+//        List<Coin> coins = objectMapper.readValue(response, new TypeReference<List<Coin>>(){});
+//        return coins;
+//        return jsonNodeToCoinList(response);
+    }
+
+    @Override
+    public List<Coin> getTop50CoinsByMarketCapRank() throws JsonProcessingException {
+        String coinsUrl = baseUrl + "/coins/markets?vs_currency=usd&per_page=50&page=1";
+        String response = getResponseBody(coinsUrl);
+        List<Coin> coins = objectMapper.readValue(response, new TypeReference<List<Coin>>(){});
+        return coins;
+    }
+
+    @Override
+    public JsonNode getTrendingCoins() throws JsonProcessingException {
+        String coinSearchUrl = baseUrl + "/search/trending";
+        String response = getResponseBody(coinSearchUrl);
+//        List<Coin> coins = objectMapper.readValue(response, new TypeReference<List<Coin>>(){});
+        JsonNode jsonNode = objectMapper.readTree(response);
+        return jsonNode;
     }
 
     private String getResponseBody(String url){
@@ -55,15 +104,20 @@ public class CoinService implements ICoinService {
             throw new RuntimeException(e);
         }
     }
-
-    @Override
-    public String getMarketChart(String coinId, int days) {
-        String marketsUrl = baseUrl + "/coins/"+coinId+"/market_chart?vs_currency=usd&days=" + days;
-        return getResponseBody(marketsUrl);
+    private List<Coin> jsonNodeToCoinList(String json) throws JsonProcessingException {
+        JsonNode node = objectMapper.readTree(json);
+        List<Coin> coins = new ArrayList<>();
+        JsonNode coinsNode = node.get("coins");
+        if (coinsNode != null && coinsNode.isArray()) {
+            for (JsonNode coinNode : coinsNode) {
+                Coin coin = jsonNodeToCoin(coinNode.toString());
+                coins.add(coin);
+            }
+        }
+        return coins;
     }
-
-    private Coin jsonNodeToCoin(String response) throws JsonProcessingException {
-        JsonNode node = objectMapper.readTree(response);
+    private Coin jsonNodeToCoin(String json) throws JsonProcessingException {
+        JsonNode node = objectMapper.readTree(json);
         Coin coin = new Coin();
         coin.setId(node.get("id").asText());
         coin.setName(node.get("name").asText());
@@ -77,38 +131,10 @@ public class CoinService implements ICoinService {
         coin.setHigh24h(new BigDecimal(marketData.get("high_24h").get("usd").asText()));
         coin.setLow24h(new BigDecimal(marketData.get("low_24h").get("usd").asText()));
         coin.setPriceChange24h(new BigDecimal(marketData.get("price_change_24h").asText()));
-        coin.setPriceChangePercentage24h(new BigDecimal(marketData.get("price_change_percentage24h").asText()));
+        coin.setPriceChangePercentage24h(new BigDecimal(marketData.get("price_change_percentage_24h").asText()));
         coin.setMarketCapChange24h(new BigDecimal(marketData.get("market_cap_change_24h").asText()));
         coin.setMarketCapChangePercentage24h(new BigDecimal(marketData.get("market_cap_change_percentage_24h").asText()));
-        coin.setTotalSupply(new BigDecimal(marketData.get("total_supply").get("usd").asText()));
+        coin.setTotalSupply(new BigDecimal(marketData.get("total_supply").asText()));
         return coin;
-    }
-
-    @Override
-    public Coin getCoinDetails(String coinId) throws JsonProcessingException {
-        String marketsUrl = baseUrl + "/coins/"+coinId;
-        String response =  getResponseBody(marketsUrl);
-        Coin coin = jsonNodeToCoin(response);
-        return coinRepository.save(coin);
-    }
-
-    @Override
-    public Coin findById(String coinId) {
-        return null;
-    }
-
-    @Override
-    public String searchCoin(String keyword) {
-        return "";
-    }
-
-    @Override
-    public String getTop50CoinsByMarketCapRank() {
-        return "";
-    }
-
-    @Override
-    public String getTradingCoins() {
-        return "";
     }
 }
