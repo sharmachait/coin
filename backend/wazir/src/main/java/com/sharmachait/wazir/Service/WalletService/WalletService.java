@@ -1,9 +1,8 @@
 package com.sharmachait.wazir.Service.WalletService;
 
 import com.sharmachait.wazir.Exceptions.InsuffecientFundsException;
-import com.sharmachait.wazir.Model.Entity.Order;
-import com.sharmachait.wazir.Model.Entity.Wallet;
-import com.sharmachait.wazir.Model.Entity.WazirUser;
+import com.sharmachait.wazir.Model.Entity.*;
+import com.sharmachait.wazir.Repository.IOrderRepository;
 import com.sharmachait.wazir.Repository.IWalletRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,9 @@ public class WalletService implements IWalletService {
 
     @Autowired
     private IWalletRepository walletRepository;
+
+    @Autowired
+    private IOrderRepository orderRepository;
 
     @Override
     public Wallet getUserWallet(WazirUser user) {
@@ -60,8 +62,36 @@ public class WalletService implements IWalletService {
         throw new InsuffecientFundsException("Insufficient funds to transfer from " + sender + " to " + receiverWallet);
     }
 
+    @Transactional
     @Override
-    public void parOrderAmount(Order order, WazirUser user) {
-        return ;
+    public void parOrderAmount(Order order, WazirUser user) throws Exception {
+        Wallet wallet = getUserWallet(user);
+        BigDecimal balance = wallet.getBalance();
+        if(order.getOrderStatus().equals(ORDER_STATUS.CANCELLED)
+                || order.getOrderStatus().equals(ORDER_STATUS.FAILED)
+                || order.getOrderStatus().equals(ORDER_STATUS.ERROR)
+                || order.getOrderStatus().equals(ORDER_STATUS.PARTIALLY_FAILED)
+        ) {
+            throw new Exception("Order not processable");
+        }
+        if(order.getOrderType().equals(ORDER_TYPE.BUY)){
+            if(balance.compareTo(order.getPrice()) >= 0) {
+                wallet.setBalance(wallet.getBalance().subtract(order.getPrice()));
+                walletRepository.save(wallet);
+                order.setOrderStatus(ORDER_STATUS.FAILED);
+                orderRepository.save(order);
+                return;
+            } else {
+                throw new InsuffecientFundsException("Insufficient funds to place order " + order.getId());
+            }
+        } else {
+            BigDecimal amount = order.getPrice();
+            wallet.setBalance(wallet.getBalance().add(amount));
+            waller.
+            walletRepository.save(wallet);
+            order.setOrderStatus(ORDER_STATUS.SUCCESS);
+            orderRepository.save(order);
+            return;
+        }
     }
 }

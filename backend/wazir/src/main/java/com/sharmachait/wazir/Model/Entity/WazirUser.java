@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @Builder
 @Entity
@@ -27,4 +29,9 @@ public class WazirUser {
 
     @OneToOne(mappedBy = "user")
     private TwoFactorOtp twoFactorOtp;
+
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.PERSIST,
+            fetch = FetchType.LAZY)
+    private Set<Order> orders;
 }

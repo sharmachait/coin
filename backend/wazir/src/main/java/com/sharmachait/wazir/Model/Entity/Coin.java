@@ -1,10 +1,10 @@
 package com.sharmachait.wazir.Model.Entity;
 
 import java.math.BigDecimal;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
@@ -82,4 +82,9 @@ public class Coin {
 
     @Embedded
     private Roi roi;
+
+    @OneToMany(mappedBy = "coin",
+            cascade = CascadeType.PERSIST,
+            fetch = FetchType.LAZY)
+    private Set<OrderItem> orderItems;
 }

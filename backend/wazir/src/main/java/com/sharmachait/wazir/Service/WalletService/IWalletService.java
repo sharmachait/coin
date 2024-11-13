@@ -13,5 +13,5 @@ public interface IWalletService {
     Wallet addBalance(Wallet wallet, BigDecimal money);
     Wallet findWalletById(Long id) throws NoSuchElementException;
     void walletToWalletTransfer(WazirUser sender, Wallet receiverWallet, BigDecimal amount) throws InsuffecientFundsException;
-    void parOrderAmount(Order order, WazirUser user);
+    void parOrderAmount(Order order, WazirUser user) throws Exception;
 }
