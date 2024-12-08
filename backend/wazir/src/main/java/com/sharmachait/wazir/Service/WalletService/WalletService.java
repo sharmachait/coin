@@ -87,7 +87,7 @@ public class WalletService implements IWalletService {
         } else {
             BigDecimal amount = order.getPrice();
             wallet.setBalance(wallet.getBalance().add(amount));
-            waller.
+
             walletRepository.save(wallet);
             order.setOrderStatus(ORDER_STATUS.SUCCESS);
             orderRepository.save(order);
